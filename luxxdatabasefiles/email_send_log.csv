@@ -1,0 +1,13 @@
+id,message_id,template_name,recipient_email,status,error_message,metadata,created_at
+54efd3bf-d4ab-4193-a7bf-c994231a94e0,5e77a42a-961b-4ed1-8c12-19ed6ae11a88,booking-receipt,junior77flemmings@gmail.com,pending,,,2026-05-31 22:44:28.87487+00
+c02f859c-6c73-48ab-ae97-188aa2d7eda6,c40b1944-fb0f-4bbb-9fb4-f06516510902,booking-receipt,luxxtouch1@gmail.com,pending,,,2026-05-31 22:44:29.253149+00
+a641277e-51bd-40a3-b704-06c8b387db48,5e77a42a-961b-4ed1-8c12-19ed6ae11a88,booking-receipt,junior77flemmings@gmail.com,dlq,"Email API error: 403 {""type"":""domain_not_verified"",""message"":""Email domain is not verified for this project"",""details"":""""}
+",,2026-05-31 22:44:33.503068+00
+7be557f0-06f2-49be-96cc-7803bda7a0d7,c40b1944-fb0f-4bbb-9fb4-f06516510902,booking-receipt,luxxtouch1@gmail.com,dlq,"Email API error: 403 {""type"":""domain_not_verified"",""message"":""Email domain is not verified for this project"",""details"":""""}
+",,2026-05-31 22:45:07.04418+00
+8243d922-936c-4f01-aba1-2298239bdea4,02f60b2c-e0e7-4350-89ac-3d23d7a93f47,booking-receipt,cristals100@gmail.com,pending,,,2026-06-03 13:51:02.035562+00
+1d136b37-e254-4be4-9549-b8e1ca6bf1fa,d260cf7d-da48-4833-bfa4-b8a5acda4a0d,booking-receipt,luxxtouch1@gmail.com,pending,,,2026-06-03 13:51:02.337781+00
+9dfd637e-6d85-4dce-bf86-1772853ee230,02f60b2c-e0e7-4350-89ac-3d23d7a93f47,booking-receipt,cristals100@gmail.com,dlq,"Email API error: 403 {""type"":""domain_not_verified"",""message"":""Email domain is not verified for this project"",""details"":""""}
+",,2026-06-03 13:51:05.099395+00
+dfe88b90-0873-4373-ac00-56c21ba4c9e5,d260cf7d-da48-4833-bfa4-b8a5acda4a0d,booking-receipt,luxxtouch1@gmail.com,dlq,"Email API error: 403 {""type"":""domain_not_verified"",""message"":""Email domain is not verified for this project"",""details"":""""}
+",,2026-06-03 13:51:38.945007+00
