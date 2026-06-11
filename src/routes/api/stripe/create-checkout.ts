@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Stripe from "stripe";
 import { services as servicesCatalog, getServiceById } from "@/lib/services";
+import { formatStudioDate, formatStudioTime } from "@/lib/timezone";
 
 const DEPOSIT_PCT = 0.35;
 const VIP_FEE = 50;
@@ -46,6 +47,13 @@ export const Route = createFileRoute("/api/stripe/create-checkout")({
           const depositCents = Math.round(total * DEPOSIT_PCT * 100);
           const remaining = (total - depositCents / 100).toFixed(2);
 
+          // Studio-local labels for the receipt. We trust the customer's chosen
+          // time label, but always derive the date label from the canonical UTC
+          // instant in the studio timezone so the receipt can never drift.
+          const startDate = new Date(startAt);
+          const timeLabel = time || formatStudioTime(startDate);
+          const dateLabel = formatStudioDate(startDate);
+
           const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
             apiVersion: "2025-08-27.basil" as any,
           });
@@ -77,7 +85,7 @@ export const Route = createFileRoute("/api/stripe/create-checkout")({
               },
             ],
             payment_intent_data: {
-              description: `Deposit for ${svc.name} on ${time ?? startAt}`,
+              description: `Deposit for ${svc.name} on ${dateLabel} at ${timeLabel}`,
               metadata: {
                 non_refundable: "true",
               },
@@ -93,6 +101,8 @@ export const Route = createFileRoute("/api/stripe/create-checkout")({
               email,
               phone: phone ?? "",
               startAt,
+              time: timeLabel,
+              dateLabel,
               total: total.toFixed(2),
               deposit: (depositCents / 100).toFixed(2),
               remaining,

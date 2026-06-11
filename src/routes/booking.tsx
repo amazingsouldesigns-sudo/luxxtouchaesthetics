@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { categories, services, getServiceById, serviceImages } from "@/lib/services";
 import { getBooking, setBooking, VIP_FEE } from "@/lib/booking-store";
 import { computePricing, DEPOSIT_PCT } from "@/lib/pricing";
+import { studioWallTimeToUtc } from "@/lib/timezone";
 import { Check, ChevronLeft, ChevronRight, Clock, Crown, Plus } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
@@ -20,19 +21,6 @@ const STEPS = ["Service", "Review & Add-ons", "Date & Time", "Your Details"] as 
 // Bookings pause from 1:00 PM and resume at 3:30 PM
 const TIMES = ["9:00 AM", "10:30 AM", "12:00 PM", "3:30 PM", "4:30 PM", "6:00 PM"];
 const ADD_ONS = services.filter((s) => s.category === "Add-ons" && s.id !== "vip-upgrade");
-
-function combineDateAndTime(date: Date, time: string): Date {
-  const m = time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (!m) return date;
-  let h = parseInt(m[1], 10);
-  const min = parseInt(m[2], 10);
-  const ampm = m[3].toUpperCase();
-  if (ampm === "PM" && h !== 12) h += 12;
-  if (ampm === "AM" && h === 12) h = 0;
-  const d = new Date(date);
-  d.setHours(h, min, 0, 0);
-  return d;
-}
 
 function BookingPage() {
   const navigate = useNavigate();
@@ -77,7 +65,7 @@ function BookingPage() {
     if (step === 0) setBooking({ serviceId });
     if (step === 1) setBooking({ addOnIds });
     if (step === 2) {
-      const startAt = date && time ? combineDateAndTime(date, time).toISOString() : undefined;
+      const startAt = date && time ? studioWallTimeToUtc(date, time)?.toISOString() : undefined;
       setBooking({ date: date?.toISOString(), time, startAt });
     }
     if (step === 3) {

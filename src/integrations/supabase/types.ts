@@ -100,6 +100,8 @@ export type Database = {
           notes: string | null
           price: number
           reminder_sent_at: string | null
+          reminder_24h_sent_at: string | null
+          reminder_12h_sent_at: string | null
           service_id: string
           service_name: string
           start_at: string
@@ -119,6 +121,8 @@ export type Database = {
           notes?: string | null
           price?: number
           reminder_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
+          reminder_12h_sent_at?: string | null
           service_id: string
           service_name: string
           start_at: string
@@ -138,6 +142,8 @@ export type Database = {
           notes?: string | null
           price?: number
           reminder_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
+          reminder_12h_sent_at?: string | null
           service_id?: string
           service_name?: string
           start_at?: string

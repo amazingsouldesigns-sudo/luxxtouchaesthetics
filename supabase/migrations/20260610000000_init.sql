@@ -250,6 +250,8 @@ CREATE TABLE public.bookings (
   cancellation_reason text,
   cancelled_at timestamptz,
   reminder_sent_at timestamptz,
+  reminder_24h_sent_at timestamptz,
+  reminder_12h_sent_at timestamptz,
   notes text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),

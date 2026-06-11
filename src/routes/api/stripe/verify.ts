@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getServiceById } from "@/lib/services";
 import { sendTransactionalEmailServer } from "@/lib/email/send";
+import { formatStudioDate, formatStudioTime, studioLocalInfo } from "@/lib/timezone";
 
 export const Route = createFileRoute("/api/stripe/verify")({
   server: {
@@ -64,6 +65,7 @@ export const Route = createFileRoute("/api/stripe/verify")({
             serviceName: svc.name,
             addOnNames: m.addOnNames,
             time: m.time,
+            dateLabel: m.dateLabel,
             total: m.total,
             deposit: m.deposit,
             remaining: m.remaining,
@@ -71,6 +73,42 @@ export const Route = createFileRoute("/api/stripe/verify")({
 
           if (existing) {
             return Response.json({ paid: true, bookingId: existing.id, metadata: safeMeta });
+          }
+
+          // Defense-in-depth: never record a brand-new booking with an invalid
+          // time. This only matters for tampering or bugs — the UI already only
+          // offers valid slots — but it guarantees no out-of-hours/past booking
+          // can slip through. (Existing bookings above are returned untouched.)
+          if (start.getTime() <= Date.now()) {
+            console.error("verify: rejected past booking time", { sessionId, startAt });
+            return Response.json({ error: "Selected time is in the past" }, { status: 400 });
+          }
+          {
+            const { dayOfWeek, minutes } = studioLocalInfo(start);
+            const { data: rules } = await supabaseAdmin
+              .from("availability_rules")
+              .select("start_time, end_time, service_id")
+              .eq("day_of_week", dayOfWeek);
+            const applicable = (rules ?? []).filter(
+              (r) => r.service_id === null || r.service_id === dbSvc.id,
+            );
+            const within = applicable.some((r) => {
+              const [sh, sm] = String(r.start_time).split(":").map(Number);
+              const [eh, em] = String(r.end_time).split(":").map(Number);
+              return minutes >= sh * 60 + sm && minutes < eh * 60 + em;
+            });
+            if (!within) {
+              console.error("verify: rejected out-of-hours booking", {
+                sessionId,
+                startAt,
+                dayOfWeek,
+                minutes,
+              });
+              return Response.json(
+                { error: "Selected time is outside booking hours" },
+                { status: 400 },
+              );
+            }
           }
 
           const addOnNames = m.addOnNames ? ` | Add-ons: ${m.addOnNames}` : "";
@@ -100,12 +138,8 @@ export const Route = createFileRoute("/api/stripe/verify")({
 
           // Send invoice-style booking receipt email (non-blocking on failure)
           try {
-            const dateLabel = start.toLocaleDateString("en-US", {
-              weekday: "long", year: "numeric", month: "long", day: "numeric",
-            });
-            const timeLabel = m.time ?? start.toLocaleTimeString("en-US", {
-              hour: "numeric", minute: "2-digit",
-            });
+            const dateLabel = m.dateLabel || formatStudioDate(start);
+            const timeLabel = m.time || formatStudioTime(start);
             const ref = `LX-${inserted.id.slice(0, 8).toUpperCase()}`;
             const templateData = {
               customerName: m.fullName,

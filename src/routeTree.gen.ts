@@ -22,6 +22,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as ApiStripeVerifyRouteImport } from './routes/api/stripe/verify'
 import { Route as ApiStripeCreateCheckoutRouteImport } from './routes/api/stripe/create-checkout'
+import { Route as ApiCronRemindersRouteImport } from './routes/api/cron/reminders'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -88,6 +89,11 @@ const ApiStripeCreateCheckoutRoute = ApiStripeCreateCheckoutRouteImport.update({
   path: '/api/stripe/create-checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronRemindersRoute = ApiCronRemindersRouteImport.update({
+  id: '/api/cron/reminders',
+  path: '/api/cron/reminders',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/services': typeof ServicesRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/stripe/create-checkout': typeof ApiStripeCreateCheckoutRoute
   '/api/stripe/verify': typeof ApiStripeVerifyRoute
 }
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/services': typeof ServicesRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/stripe/create-checkout': typeof ApiStripeCreateCheckoutRoute
   '/api/stripe/verify': typeof ApiStripeVerifyRoute
 }
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/services': typeof ServicesRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/stripe/create-checkout': typeof ApiStripeCreateCheckoutRoute
   '/api/stripe/verify': typeof ApiStripeVerifyRoute
 }
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/unsubscribe'
     | '/email/unsubscribe'
+    | '/api/cron/reminders'
     | '/api/stripe/create-checkout'
     | '/api/stripe/verify'
   fileRoutesByTo: FileRoutesByTo
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/unsubscribe'
     | '/email/unsubscribe'
+    | '/api/cron/reminders'
     | '/api/stripe/create-checkout'
     | '/api/stripe/verify'
   id:
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/unsubscribe'
     | '/email/unsubscribe'
+    | '/api/cron/reminders'
     | '/api/stripe/create-checkout'
     | '/api/stripe/verify'
   fileRoutesById: FileRoutesById
@@ -195,6 +207,7 @@ export interface RootRouteChildren {
   ServicesRoute: typeof ServicesRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  ApiCronRemindersRoute: typeof ApiCronRemindersRoute
   ApiStripeCreateCheckoutRoute: typeof ApiStripeCreateCheckoutRoute
   ApiStripeVerifyRoute: typeof ApiStripeVerifyRoute
 }
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeCreateCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/reminders': {
+      id: '/api/cron/reminders'
+      path: '/api/cron/reminders'
+      fullPath: '/api/cron/reminders'
+      preLoaderRoute: typeof ApiCronRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -307,6 +327,7 @@ const rootRouteChildren: RootRouteChildren = {
   ServicesRoute: ServicesRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  ApiCronRemindersRoute: ApiCronRemindersRoute,
   ApiStripeCreateCheckoutRoute: ApiStripeCreateCheckoutRoute,
   ApiStripeVerifyRoute: ApiStripeVerifyRoute,
 }
