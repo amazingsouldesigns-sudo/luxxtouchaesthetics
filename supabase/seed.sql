@@ -24,6 +24,7 @@ VALUES
   ('1469a73c-6aa7-47f0-b83d-a17714d073ee','Hybrid Set','A blend of classic and volume for the perfect mix.','Lashes',120,135.00,1,true,60,'2026-05-02 20:40:12.555286+00','2026-05-02 20:40:12.555286+00'),
   ('3ca42ccf-72f2-4477-bbca-f5b33ab726fa','Wet Set','Spiked, glossy lash effect — trendy and bold.','Lashes',120,135.00,1,true,70,'2026-05-02 20:40:12.555286+00','2026-05-02 20:40:12.555286+00'),
   ('a657080f-99f3-4b2e-9988-31b2ea3afee9','Classic Set','One extension per natural lash for everyday elegance.','Lashes',120,120.00,1,true,80,'2026-05-02 20:40:12.555286+00','2026-05-02 20:40:12.555286+00'),
+  ('b2e7c1d4-3f8a-4c2b-9e6d-1a2b3c4d5e6f','Cluster Lash Set','Quick-glam cluster lashes for an instant fuller look.','Lashes',45,35.00,1,true,90,'2026-05-02 20:40:12.555286+00','2026-05-02 20:40:12.555286+00'),
   ('dc9e6c97-2bcd-4948-b34d-70dbcff3683b','Refill','Maintain your lash fullness within 2–3 weeks.','Refills',90,100.00,1,true,100,'2026-05-02 20:40:12.555286+00','2026-05-02 20:40:12.555286+00'),
   ('5400fe4a-4486-484c-b416-a37274491c99','Luxx Signature Refill','Refill specifically for the Luxx Signature Set.','Refills',120,125.00,1,true,110,'2026-05-02 20:40:12.555286+00','2026-05-02 20:40:12.555286+00'),
   ('902abb5f-86c9-476a-8855-23b9b592702b','Removals','Gentle, safe removal of existing lash extensions.','Add-ons',30,35.00,1,true,200,'2026-05-02 20:40:12.555286+00','2026-05-02 20:40:12.555286+00'),

@@ -34,17 +34,64 @@ export const Route = createFileRoute("/api/stripe/verify")({
             return Response.json({ error: "Missing booking metadata" }, { status: 400 });
           }
 
-          // Look up the DB service by name (slugged catalog -> services row)
           const svc = getServiceById(slug);
           if (!svc) return Response.json({ error: "Unknown service" }, { status: 400 });
 
-          const { data: dbSvc, error: svcErr } = await supabaseAdmin
-            .from("services")
-            .select("id, duration_minutes, price")
-            .eq("name", svc.name)
-            .eq("active", true)
-            .maybeSingle();
-          if (svcErr || !dbSvc) {
+          // Resolve the DB service. Prefer the stable id captured at checkout
+          // time; fall back to a name match for any sessions created before that
+          // id was stored. We track DB errors separately from a genuinely
+          // missing row so we can tell the customer the right thing — e.g. if
+          // the database is paused/unreachable, that is NOT "service missing".
+          let dbSvc: { id: string; duration_minutes: number; price: number } | null = null;
+          let dbError: unknown = null;
+          if (m.dbServiceId) {
+            const { data, error } = await supabaseAdmin
+              .from("services")
+              .select("id, duration_minutes, price")
+              .eq("id", m.dbServiceId)
+              .maybeSingle();
+            dbSvc = data;
+            if (error) dbError = error;
+          }
+          if (!dbSvc) {
+            const { data, error } = await supabaseAdmin
+              .from("services")
+              .select("id, duration_minutes, price")
+              .eq("name", svc.name)
+              .eq("active", true)
+              .maybeSingle();
+            dbSvc = data;
+            if (error) dbError = error;
+          }
+          if (dbError) {
+            // The payment succeeded but we couldn't reach the database (e.g. the
+            // Supabase project is paused). Do NOT claim the service is missing —
+            // tell the customer their payment is safe and we'll confirm shortly,
+            // and return 503 so the confirmation page can retry later.
+            console.error("verify: database unreachable AFTER payment", {
+              sessionId,
+              slug,
+              name: svc.name,
+              dbError,
+            });
+            return Response.json(
+              {
+                error:
+                  "Your payment was received, but we're having trouble confirming your booking right now. Don't worry — we have your payment and will confirm by email shortly.",
+              },
+              { status: 503 },
+            );
+          }
+          if (!dbSvc) {
+            // Payment already succeeded but the service genuinely isn't in the
+            // database — log loudly so the booking can be recovered manually
+            // (and refunded if needed). Checkout now prevents this from happening.
+            console.error("verify: service not configured AFTER payment", {
+              sessionId,
+              slug,
+              name: svc.name,
+              dbServiceId: m.dbServiceId,
+            });
             return Response.json({ error: "Service not configured in database" }, { status: 400 });
           }
 

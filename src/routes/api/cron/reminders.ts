@@ -111,12 +111,13 @@ export const Route = createFileRoute("/api/cron/reminders")({
               });
               return true;
             } catch (e) {
-              // Roll back the claim so a later run can retry this reminder.
-              await supabaseAdmin
-                .from("bookings")
-                .update({ [column]: null })
-                .eq("id", b.id);
-              console.error(`reminder ${window} failed for ${b.id}`, e);
+              // Intentionally do NOT roll back the claim. A persistent failure
+              // (e.g. unverified domain, bad recipient) must not be retried every
+              // hour — that floods the email provider with failed sends and can
+              // get the account suspended. The claim stays set so each reminder
+              // is attempted at most once; failures are logged for manual
+              // follow-up by the owner.
+              console.error(`reminder ${window} failed for ${b.id} (will not retry)`, e);
               return false;
             }
           };

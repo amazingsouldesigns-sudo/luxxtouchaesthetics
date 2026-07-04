@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import Stripe from "stripe";
 import { services as servicesCatalog, getServiceById } from "@/lib/services";
 import { formatStudioDate, formatStudioTime } from "@/lib/timezone";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const DEPOSIT_PCT = 0.35;
 const VIP_FEE = 50;
@@ -36,6 +37,30 @@ export const Route = createFileRoute("/api/stripe/create-checkout")({
               status: 400,
               headers: { "Content-Type": "application/json" },
             });
+          }
+
+          // Critical: confirm the service exists in the database BEFORE charging.
+          // The booking is later recorded against this row; if it's missing we
+          // must not take the customer's money and then fail to book them.
+          const { data: dbSvc, error: dbSvcErr } = await supabaseAdmin
+            .from("services")
+            .select("id")
+            .eq("name", svc.name)
+            .eq("active", true)
+            .maybeSingle();
+          if (dbSvcErr || !dbSvc) {
+            console.error("create-checkout: service not configured in DB", {
+              serviceId,
+              name: svc.name,
+              dbSvcErr,
+            });
+            return new Response(
+              JSON.stringify({
+                error:
+                  "This service can't be booked online right now. Please contact us and we'll book you in — you have not been charged.",
+              }),
+              { status: 400, headers: { "Content-Type": "application/json" } },
+            );
           }
 
           const addOns = (addOnIds as string[])
@@ -92,6 +117,7 @@ export const Route = createFileRoute("/api/stripe/create-checkout")({
             },
             metadata: {
               serviceId,
+              dbServiceId: dbSvc.id,
               serviceName: svc.name,
               addOnIds: addOns.map((a) => a.id).join(","),
               addOnNames: addOns.map((a) => a.name).join(", "),
