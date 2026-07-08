@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { getSiteUrl } from "@/lib/site-url";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -9,7 +10,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { session, isAdmin, loading } = useAuth();
+  const { session, loading } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,10 +20,10 @@ function LoginPage() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && session && isAdmin) {
-      navigate({ to: "/dashboard" });
+    if (!loading && session) {
+      navigate({ to: "/" });
     }
-  }, [loading, session, isAdmin, navigate]);
+  }, [loading, session, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +39,7 @@ function LoginPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo: `${getSiteUrl()}/auth/callback`,
             data: { full_name: fullName },
           },
         });
@@ -47,7 +48,7 @@ function LoginPage() {
         setMode("signin");
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
+          redirectTo: `${getSiteUrl()}/reset-password`,
         });
         if (error) throw error;
         setMsg("If an account exists for that email, a reset link is on its way.");
@@ -63,7 +64,7 @@ function LoginPage() {
     setErr(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: { redirectTo: `${getSiteUrl()}/auth/callback` },
     });
     if (error) setErr(error.message);
   };
@@ -82,7 +83,7 @@ function LoginPage() {
               : "Enter your email and we'll send you a reset link."}
         </p>
 
-        {session && !isAdmin && (
+        {session && (
           <div className="mt-4 rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
             Signed in as {session.user.email}.
           </div>

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PaymentRouteImport } from './routes/payment'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -20,6 +21,7 @@ import { Route as ConfirmationRouteImport } from './routes/confirmation'
 import { Route as BookingRouteImport } from './routes/booking'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as ApiStripeVerifyRouteImport } from './routes/api/stripe/verify'
 import { Route as ApiStripeCreateCheckoutRouteImport } from './routes/api/stripe/create-checkout'
 import { Route as ApiCronRemindersRouteImport } from './routes/api/cron/reminders'
@@ -37,6 +39,11 @@ const ServicesRoute = ServicesRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentRoute = PaymentRouteImport.update({
@@ -79,6 +86,11 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiStripeVerifyRoute = ApiStripeVerifyRouteImport.update({
   id: '/api/stripe/verify',
   path: '/api/stripe/verify',
@@ -103,9 +115,11 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/payment': typeof PaymentRoute
+  '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/services': typeof ServicesRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/stripe/create-checkout': typeof ApiStripeCreateCheckoutRoute
@@ -119,9 +133,11 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/payment': typeof PaymentRoute
+  '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/services': typeof ServicesRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/stripe/create-checkout': typeof ApiStripeCreateCheckoutRoute
@@ -136,9 +152,11 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/payment': typeof PaymentRoute
+  '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/services': typeof ServicesRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/stripe/create-checkout': typeof ApiStripeCreateCheckoutRoute
@@ -154,9 +172,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/payment'
+    | '/profile'
     | '/reset-password'
     | '/services'
     | '/unsubscribe'
+    | '/auth/callback'
     | '/email/unsubscribe'
     | '/api/cron/reminders'
     | '/api/stripe/create-checkout'
@@ -170,9 +190,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/payment'
+    | '/profile'
     | '/reset-password'
     | '/services'
     | '/unsubscribe'
+    | '/auth/callback'
     | '/email/unsubscribe'
     | '/api/cron/reminders'
     | '/api/stripe/create-checkout'
@@ -186,9 +208,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/payment'
+    | '/profile'
     | '/reset-password'
     | '/services'
     | '/unsubscribe'
+    | '/auth/callback'
     | '/email/unsubscribe'
     | '/api/cron/reminders'
     | '/api/stripe/create-checkout'
@@ -203,9 +227,11 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   PaymentRoute: typeof PaymentRoute
+  ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ServicesRoute: typeof ServicesRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiCronRemindersRoute: typeof ApiCronRemindersRoute
   ApiStripeCreateCheckoutRoute: typeof ApiStripeCreateCheckoutRoute
@@ -233,6 +259,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payment': {
@@ -291,6 +324,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/stripe/verify': {
       id: '/api/stripe/verify'
       path: '/api/stripe/verify'
@@ -323,9 +363,11 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   PaymentRoute: PaymentRoute,
+  ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ServicesRoute: ServicesRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiCronRemindersRoute: ApiCronRemindersRoute,
   ApiStripeCreateCheckoutRoute: ApiStripeCreateCheckoutRoute,

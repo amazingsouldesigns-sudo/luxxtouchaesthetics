@@ -97,6 +97,31 @@ export function formatStudioTime(d: Date): string {
   }).format(d);
 }
 
+/**
+ * Returns the studio-local calendar day of an instant as "YYYY-MM-DD".
+ * Used to match a booking against admin-blocked days.
+ */
+export function studioDateKey(d: Date): string {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone: STUDIO_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const map: Record<string, string> = {};
+  for (const p of dtf.formatToParts(d)) {
+    if (p.type !== "literal") map[p.type] = p.value;
+  }
+  return `${map.year}-${map.month}-${map.day}`;
+}
+
+/** Builds a "YYYY-MM-DD" key from a calendar Date's own year/month/day. */
+export function localDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+}
+
 const WEEKDAY_INDEX: Record<string, number> = {
   Sun: 0,
   Mon: 1,

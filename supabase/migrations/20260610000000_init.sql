@@ -456,6 +456,57 @@ CREATE POLICY "Service role can mark tokens as used" ON public.email_unsubscribe
 CREATE INDEX idx_unsubscribe_tokens_token ON public.email_unsubscribe_tokens(token);
 
 -- ============================================================
+-- SITE SETTINGS (single-row admin "kill switch" for booking)
+-- ============================================================
+CREATE TABLE public.site_settings (
+  -- Singleton pattern: id is always TRUE so only one row can exist.
+  id boolean PRIMARY KEY DEFAULT true,
+  bookings_enabled boolean NOT NULL DEFAULT true,
+  booking_paused_message text NOT NULL DEFAULT
+    'Online booking is temporarily paused. Please check back soon or contact us directly to schedule your appointment.',
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT site_settings_singleton CHECK (id)
+);
+ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view site settings" ON public.site_settings
+  FOR SELECT TO anon, authenticated USING (true);
+
+CREATE POLICY "Admins manage site settings" ON public.site_settings
+  FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+
+CREATE TRIGGER site_settings_set_updated_at BEFORE UPDATE ON public.site_settings
+  FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+INSERT INTO public.site_settings (id) VALUES (true) ON CONFLICT (id) DO NOTHING;
+
+-- Let logged-in customers view bookings made with their email address
+-- (server-created bookings have no user_id).
+CREATE POLICY "Users can view bookings by email" ON public.bookings
+  FOR SELECT TO authenticated
+  USING (lower(customer_email) = lower(auth.jwt() ->> 'email'));
+
+-- ============================================================
+-- BLOCKED DATES (admin closes specific calendar days for booking)
+-- ============================================================
+CREATE TABLE public.blocked_dates (
+  day date PRIMARY KEY,
+  reason text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.blocked_dates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view blocked dates" ON public.blocked_dates
+  FOR SELECT TO anon, authenticated USING (true);
+
+CREATE POLICY "Admins manage blocked dates" ON public.blocked_dates
+  FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+
+-- ============================================================
 -- Lock down internal SECURITY DEFINER functions
 -- ============================================================
 REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;

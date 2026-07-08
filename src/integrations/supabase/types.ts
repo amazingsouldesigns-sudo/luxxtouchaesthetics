@@ -87,6 +87,24 @@ export type Database = {
           },
         ]
       }
+      blocked_dates: {
+        Row: {
+          created_at: string
+          day: string
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           cancellation_reason: string | null
@@ -316,6 +334,27 @@ export type Database = {
           name?: string
           price?: number
           sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          booking_paused_message: string
+          bookings_enabled: boolean
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          booking_paused_message?: string
+          bookings_enabled?: boolean
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          booking_paused_message?: string
+          bookings_enabled?: boolean
+          id?: boolean
           updated_at?: string
         }
         Relationships: []

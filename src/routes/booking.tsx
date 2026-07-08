@@ -1,10 +1,11 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { categories, services, getServiceById, serviceImages } from "@/lib/services";
 import { getBooking, setBooking, VIP_FEE } from "@/lib/booking-store";
 import { computePricing, DEPOSIT_PCT } from "@/lib/pricing";
-import { studioWallTimeToUtc } from "@/lib/timezone";
-import { Check, ChevronLeft, ChevronRight, Clock, Crown, Plus } from "lucide-react";
+import { studioWallTimeToUtc, localDateKey } from "@/lib/timezone";
+import { supabase } from "@/integrations/supabase/client";
+import { CalendarOff, Check, ChevronLeft, ChevronRight, Clock, Crown, Plus } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/booking")({
@@ -33,6 +34,35 @@ function BookingPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [vip, setVip] = useState(false);
+  // Booking availability (admin kill switch). null = still checking.
+  const [bookingsEnabled, setBookingsEnabled] = useState<boolean | null>(null);
+  const [pausedMessage, setPausedMessage] = useState<string>("");
+  // Admin-blocked calendar days (keys like "2026-07-09").
+  const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let active = true;
+    supabase
+      .from("site_settings")
+      .select("bookings_enabled, booking_paused_message")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active) return;
+        // Fail open: if the row can't be read, keep booking available.
+        setBookingsEnabled(data ? data.bookings_enabled : true);
+        setPausedMessage(data?.booking_paused_message ?? "");
+      });
+    supabase
+      .from("blocked_dates")
+      .select("day")
+      .then(({ data }) => {
+        if (!active) return;
+        setBlockedDates(new Set((data ?? []).map((r) => r.day)));
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     // Detect VIP flag from URL (?vip=1) and persist
@@ -78,6 +108,37 @@ function BookingPage() {
 
   const toggleAddOn = (id: string) =>
     setAddOnIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  if (bookingsEnabled === null) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-24 text-center text-sm text-muted-foreground">
+        Loading…
+      </div>
+    );
+  }
+
+  if (bookingsEnabled === false) {
+    return (
+      <div className="mx-auto max-w-lg px-5 py-20 sm:py-28">
+        <div className="card-luxe ring-luxe p-8 text-center sm:p-12">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[color:var(--petal)]/50">
+            <CalendarOff className="h-6 w-6 text-[color:var(--ruby)]" />
+          </div>
+          <span className="mt-6 block text-[10px] tracking-luxe text-[color:var(--ruby)]">
+            BOOKING PAUSED
+          </span>
+          <h1 className="mt-3 font-display text-3xl sm:text-4xl">We're not taking bookings right now</h1>
+          <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+            {pausedMessage ||
+              "Online booking is temporarily paused. Please check back soon or contact us directly to schedule your appointment."}
+          </p>
+          <Link to="/" className="btn-luxe mt-8 inline-flex">
+            BACK TO HOME
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // Keyboard navigation: arrow keys move between booking steps.
   useEffect(() => {
@@ -140,7 +201,7 @@ function BookingPage() {
         {step === 1 && service && (
           <StepReview service={service} addOnIds={addOnIds} toggleAddOn={toggleAddOn} vip={vip} />
         )}
-        {step === 2 && <StepDateTime date={date} time={time} onDate={setDate} onTime={setTime} vip={vip} onEnableVip={() => { setVip(true); setBooking({ vip: true }); }} />}
+        {step === 2 && <StepDateTime date={date} time={time} onDate={setDate} onTime={setTime} vip={vip} onEnableVip={() => { setVip(true); setBooking({ vip: true }); }} blockedDates={blockedDates} />}
         {step === 3 && (
           <StepDetails
             service={service}
@@ -328,7 +389,7 @@ function Row({ label, value, bold, accent }: { label: string; value: string; bol
   );
 }
 
-function StepDateTime({ date, time, onDate, onTime, vip, onEnableVip }: { date?: Date; time?: string; onDate: (d: Date) => void; onTime: (t: string) => void; vip: boolean; onEnableVip: () => void }) {
+function StepDateTime({ date, time, onDate, onTime, vip, onEnableVip, blockedDates }: { date?: Date; time?: string; onDate: (d: Date) => void; onTime: (t: string) => void; vip: boolean; onEnableVip: () => void; blockedDates: Set<string> }) {
   const [view, setView] = useState(() => {
     const d = date ?? new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -361,19 +422,22 @@ function StepDateTime({ date, time, onDate, onTime, vip, onEnableVip }: { date?:
               if (!c) return <div key={i} />;
               const day = c.getDay();
               const isPast = c < today;
+              const isBlocked = blockedDates.has(localDateKey(c));
               const needsVip = day === 1 && !vip;
-              const disabled = isPast || day === 0;
+              const disabled = isPast || day === 0 || isBlocked;
               const isSelected = date && c.toDateString() === date.toDateString();
               return (
                 <button
                   key={i}
                   disabled={disabled}
+                  title={isBlocked ? "Unavailable" : undefined}
                   onClick={() => {
                     if (needsVip) { setPendingMonday(c); return; }
                     onDate(c);
                   }}
                   className={`aspect-square text-sm transition-colors ${
                     isSelected ? "bg-[color:var(--ruby)] text-primary-foreground"
+                    : isBlocked ? "text-muted-foreground/40 line-through cursor-not-allowed"
                     : disabled ? "text-muted-foreground/40 cursor-not-allowed"
                     : needsVip ? "text-[color:var(--ruby)]/70 hover:bg-[color:var(--petal)]/50"
                     : "hover:bg-[color:var(--petal)]/50"

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Stripe from "stripe";
 import { services as servicesCatalog, getServiceById } from "@/lib/services";
-import { formatStudioDate, formatStudioTime } from "@/lib/timezone";
+import { formatStudioDate, formatStudioTime, studioDateKey } from "@/lib/timezone";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const DEPOSIT_PCT = 0.35;
@@ -37,6 +37,48 @@ export const Route = createFileRoute("/api/stripe/create-checkout")({
               status: 400,
               headers: { "Content-Type": "application/json" },
             });
+          }
+
+          // Admin "kill switch": if online booking is paused, refuse BEFORE
+          // charging the customer. Fail open only if the settings row is
+          // genuinely unreachable (never block a paying customer over an
+          // infra blip) — but a present row that says disabled is honored.
+          {
+            const { data: settings } = await supabaseAdmin
+              .from("site_settings")
+              .select("bookings_enabled, booking_paused_message")
+              .maybeSingle();
+            if (settings && settings.bookings_enabled === false) {
+              return new Response(
+                JSON.stringify({
+                  error:
+                    settings.booking_paused_message ||
+                    "Online booking is temporarily paused. Please contact us to schedule — you have not been charged.",
+                  bookingsPaused: true,
+                }),
+                { status: 403, headers: { "Content-Type": "application/json" } },
+              );
+            }
+          }
+
+          // Refuse admin-blocked days BEFORE charging.
+          {
+            const dayKey = studioDateKey(new Date(startAt));
+            const { data: blocked } = await supabaseAdmin
+              .from("blocked_dates")
+              .select("day")
+              .eq("day", dayKey)
+              .maybeSingle();
+            if (blocked) {
+              return new Response(
+                JSON.stringify({
+                  error:
+                    "That day is no longer available for booking. Please choose another date — you have not been charged.",
+                  dateBlocked: true,
+                }),
+                { status: 403, headers: { "Content-Type": "application/json" } },
+              );
+            }
           }
 
           // Critical: confirm the service exists in the database BEFORE charging.
